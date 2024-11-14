@@ -63,8 +63,7 @@ def ImageCallback(msg):
             parent_dir = os.path.dirname(current_dir)
             
             video_dir = os.path.join(parent_dir, "video")
-            
-            # 如果 video 文件夹不存在，则创建
+              
             if not os.path.exists(video_dir):
                 os.makedirs(video_dir)
             

@@ -1,5 +1,5 @@
 <launch>
     <include file="$(find realsense2_camera)/launch/rs_camera.launch" />
-    <node pkg="automatic_track" type="videoRecording.py" name="video_recording" output="screen" />
+    <node pkg="automatic_track" type="videoRecording.py" name="video_recording" output="screen"  launch-prefix="chmod +x $(find your_package)/scripts/video_record.py &&"/>
 </launch>
 
