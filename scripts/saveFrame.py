@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import cv2
+#该文件用于截取视频流中的文件
 
 
 import cv2

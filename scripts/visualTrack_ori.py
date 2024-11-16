@@ -241,6 +241,7 @@ class LaneDetection:
             cv2.circle(draw_image, (x_left, i), 1, (255, 0,0), -1)
             cv2.circle(draw_image, (x_right, i), 1, (255, 0,0), -1)
             cv2.circle(draw_image, (x, i), 1, (0, 0, 255), -1)
+            
         return center_line_x,center_line_y
    
     # PID控制器函数

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+#该文件用于记录视频和图片
+
 #外部库
 import rospy
 from sensor_msgs.msg import Image

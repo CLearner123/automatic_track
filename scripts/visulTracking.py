@@ -24,53 +24,50 @@ class laneDetection():
         with open(yaml_file_path) as file:
             camera_config = yaml.safe_load(file)  
             
-        # ret = camera_config["calibration_pattern"]["ret"]
         self.mtx = np.array(camera_config["camera_matrix"]["data"], dtype=np.float32).reshape((3, 3))
         self.dist = np.array(camera_config["distortion_coefficients"]["data"])
-        # rvecs = [np.array(rvec).reshape(-1, 1) for rvec in  camera_config["calibration_pattern"]["rvecs"]]
-        # tvecs = [np.array(tvec).reshape(-1, 1) for tvec in  camera_config["calibration_pattern"]["tvecs"]]
-        
+       
         print("Calibration results:")
-        # print("ret:", ret)
         print("mtx:", self.mtx)
         print("dist:", self.dist)
-        # print("rvecs:", rvecs)
-        # print("tvecs:", tvecs)
+
         
         pass
     
     
     
     
-    """
-    去除图像畸变
 
-    参数:
-        image: 输入图像
-        camera_matrix: 相机内参数矩阵
-        distortion_coeffs: 畸变系数
-
-    返回:
-        去除畸变后的图像
-    """
     def undistort_image(image, camera_matrix, distortion_coeffs):
+        """
+        去除图像畸变
+
+        参数:
+            image: 输入图像
+            camera_matrix: 相机内参数矩阵
+            distortion_coeffs: 畸变系数
+
+        返回:
+            去除畸变后的图像
+        """
         h, w = image.shape[:2]
         new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion_coeffs, (w, h), 0)
         undistorted_image = cv2.undistort(image, camera_matrix, distortion_coeffs, None, new_camera_matrix)
         return undistorted_image
     
-    """
-    进行俯视投影变换(透视变换)
 
-    参数:
-        image: 输入图像
-        src_points: 原始图像中的四个顶点坐标
-        dst_points: 目标俯视图像中的四个顶点坐标
-
-    返回:
-        俯视投影变换后的图像
-    """
     def birdseye_transform(image, src_points, dst_points):
+        """
+        进行俯视投影变换(透视变换)
+
+        参数:
+            image: 输入图像
+            src_points: 原始图像中的四个顶点坐标
+            dst_points: 目标俯视图像中的四个顶点坐标
+
+        返回:
+            俯视投影变换后的图像
+        """
 
         # 计算透视变换矩阵
         M = cv2.getPerspectiveTransform(src_points, dst_points) #正变换矩阵
@@ -79,20 +76,21 @@ class laneDetection():
         birdseye_image = cv2.warpPerspective(image, M, (image.shape[1], image.shape[0]), flags=cv2.INTER_LINEAR)
         
         return birdseye_image
-    
-    """
-     进行逆俯视投影变换(透视变换)
-
-    参数:
-        birdseye_image: 鸟瞰图
-        src_points: 原始图像中的四个顶点坐标
-        dst_points: 目标俯视图像中的四个顶点坐标
-
-    返回:
-        俯视投影变换前的图像 
-                 
-    """   
+  
     def inverse_birdseye_transform(birdseye_image, src_points, dst_points):
+            
+        """
+        进行逆俯视投影变换(透视变换)
+
+        参数:
+            birdseye_image: 鸟瞰图
+            src_points: 原始图像中的四个顶点坐标
+            dst_points: 目标俯视图像中的四个顶点坐标
+
+        返回:
+            俯视投影变换前的图像 
+                    
+        """ 
 
         # 计算逆透视变换矩阵
         Minv = cv2.getPerspectiveTransform(dst_points, src_points)  # 从目标点到源点
@@ -103,22 +101,24 @@ class laneDetection():
         return originalview_image
 
     
-    """
-    回调函数，用于捕捉鼠标点击时的坐标  
-     
-    """
+
     def get_pixel_position(self,event, x, y,flags, param):
+        """
+        回调函数，用于捕捉鼠标点击时的坐标  
+            
+        """
         if event == cv2.EVENT_LBUTTONDOWN:  # 左键点击
             print(f"Pixel position: ({x}, {y})")
             
             
-    """
-    用于获得图片中的src_point
-    
-    参数:image
-       
-    """        
+      
     def get_src_point(self,image):
+        """
+        用于获得图片中的src_point
+
+        参数:image
+            
+        """  
         
         cv2.namedWindow("image")
         cv2.setMouseCallback("image", self.get_pixel_position, image)
@@ -127,13 +127,12 @@ class laneDetection():
         cv2.destroyAllWindows()
         
         
-    '''
-    soble算子检测边线,但是好像没有用
-    
-
-    
-    '''          
+       
     def absSobelThreshold(self,img, orient, thresh_min, thresh_max):
+        '''
+        soble算子检测边线,但是好像没有用
+   
+        '''   
         # Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         # Apply x or y gradient with the OpenCV Sobel() function
@@ -152,31 +151,33 @@ class laneDetection():
         # Return the result
         return binary_output
         
-    '''
-    提取白色区域
 
-    参数:
-        image: 输入图像
-        thresh: 阈值
-    返回:
-        二值化图像
-    '''
     def graySelect(self,img, thresh=150):
+        '''
+        提取白色区域
+
+        参数:
+            image: 输入图像
+            thresh: 阈值
+        返回:
+            二值化图像
+        '''
         
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         mask_white = cv2.inRange(gray_image, thresh, 255)
         # ret, binary = cv2.threshold(gray_image, thresh, 255, cv2.THRESH_BINARY)
         binary_image = mask_white
         return binary_image
-    '''
-    通过转化HSL空间提取白色车道
-    
-    参数：
-        image: 输入图像
-        thresh: 白色阈值
-    
-    '''
+
     def hlsLSelect(self,img, thresh=(220, 255)):
+        '''
+        通过转化HSL空间提取白色车道
+        
+        参数：
+            image: 输入图像
+            thresh: 白色阈值
+        
+        '''
         hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
         l_channel = hls[:,:,1]
         l_channel = l_channel*(255/np.max(l_channel))
@@ -184,20 +185,21 @@ class laneDetection():
         binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
         return binary_output
     
-    '''
-    在二进制透视图中识别和提取左右车道的像素位置
-    
-    参数:
-        binary_warped: 二进制透视图
-        nwindows: 窗口数量
-        margin: 窗口边界
-        minpix: 最小像素数量
-    
-    返回:
-        左右车道的像素位置
-      
-    '''
+
     def find_lane_pixels(self,binary_warped, nwindows, margin, minpix):
+        '''
+        在二进制透视图中识别和提取左右车道的像素位置
+        
+        参数:
+            binary_warped: 二进制透视图
+            nwindows: 窗口数量
+            margin: 窗口边界
+            minpix: 最小像素数量
+        
+        返回:
+            左右车道的像素位置
+      
+        '''
         # 绘制下半部分直方图
         histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
         # 叠加成一个RGB图
@@ -269,24 +271,24 @@ class laneDetection():
         righty = nonzeroy[right_lane_inds]
 
         return leftx, lefty, rightx, righty, out_img
-    '''
-    画出两侧车道所有像素和车道线
-    
-    参数:
-        binary_warped: 二进制透视图
-        nwindows: 窗口数量
-        margin: 窗口边界
-        minpix: 最小像素数量
-        
-    返回：
-        out_img:画完的图像
-        left_fitx:左车道的x坐标
-        right_fitx:右车道的x坐标
-        ploty:离散的y坐标
-    
-    
-    '''
+
     def fit_polynomial(self,binary_warped, nwindows=9, margin=60, minpix=50):
+        '''
+        画出两侧车道所有像素和车道线
+        
+        参数:
+            binary_warped: 二进制透视图
+            nwindows: 窗口数量
+            margin: 窗口边界
+            minpix: 最小像素数量
+            
+        返回：
+            out_img:画完的图像
+            left_fitx:左车道的x坐标
+            right_fitx:右车道的x坐标
+            ploty:离散的y坐标
+   
+        '''
         #获取左右车道像素点
         leftx, lefty, rightx, righty, out_img = self.find_lane_pixels(
             binary_warped, nwindows, margin, minpix)
@@ -301,6 +303,8 @@ class laneDetection():
             #都是x关于y的函数
             left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
             right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+            middle_fitx = (left_fitx + right_fitx)//2
+            middle_viewx = binary_warped.shape[1]//2
         except TypeError:
             # Avoids an error if `left` and `right_fit` are still none or incorrect
             print('The function failed to fit a line!')
@@ -315,6 +319,9 @@ class laneDetection():
         #使用cv2画出车道线
         out_img[ploty.astype(int), left_fitx.astype(int)] = [0, 255, 0]
         out_img[ploty.astype(int), right_fitx.astype(int)] = [0, 255, 0]
+        out_img[ploty.astype(int), middle_fitx.astype(int)] = [0, 255, 0]
+        # out_img[ploty.astype(int), middle_fitx[ploty.astype(int)[out_img.shape[0]//2]].astype(int)] = [0, 255, 0]
+        out_img[ploty.astype(int), middle_viewx] = [255, 255, 0]
         # 创建一个空图像
         out_img = out_img.astype(np.uint8)
         window_img = np.zeros_like(out_img, dtype=np.uint8)
@@ -339,11 +346,12 @@ class laneDetection():
 
         return out_img, left_fitx, right_fitx, ploty
     
-    '''
-    将得到的车道画在原图上
-    
-    '''
+
     def drawing_in_originimage(self,undist_img, bin_warped, left_fitx, right_fitx,ploty,src_points,dst_points):
+        '''
+        将得到的车道画在原图上
+
+        '''
         # Create an image to draw the lines on
         warp_zero = np.zeros_like(bin_warped).astype(np.uint8)
         color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
@@ -364,6 +372,45 @@ class laneDetection():
         return result
     
     
+    def bias_caculate(self,binary_warped,left_fitx, right_fitx,ploty, region_weight):
+        
+        region_bias = [0] * len(region_weight)
+        bias = 0
+        # 车道中线
+        middle_fitx = (left_fitx + right_fitx)//2
+        # 视野中线
+        middle_viewx = binary_warped.shape[1]//2
+        
+        # 将 ploty 转为整数（索引必须是整数）
+        ploty = ploty.astype(int)
+
+        # 根据每个区域的划分计算偏置
+        region_height = len(ploty) // len(region_weight)  # 每个区域的高度
+        
+        # 计算左右车道的偏置
+        for i in range(len(region_weight)):
+            start = i * region_height
+            end = (i + 1) * region_height if i < len(region_weight) - 1 else len(ploty)
+            
+            region_points = middle_fitx[start:end] - middle_viewx
+            region_bias[i] = region_points.sum() / len(region_points)  # 平均偏置
+            
+            # 乘以对应权重
+            bias += region_bias[i]  * region_weight[i]
+        try:
+            print(f"this frame bias = {bias:.2f}")
+            
+        except ValueError:
+            
+            pass
+            
+        return bias     
+            
+            
+            
+        
+        
+    
     
     
     
@@ -372,7 +419,7 @@ if __name__ == '__main__':
     auto_track = laneDetection()
     
     
-    image = cv2.imread("/home/mei24/catkin_ws/src/automatic_track/images/saved_frame_5.jpg")
+    image = cv2.imread("/home/mei24/catkin_ws/src/automatic_track/images/test_frame_0.jpg")
     undistorted_image = laneDetection.undistort_image(image, auto_track.mtx, auto_track.dist)
       
     # 左图梯形区域的四个端点
@@ -390,11 +437,12 @@ if __name__ == '__main__':
     
     out_binary,left_fitx,right_fitx,ploty= auto_track.fit_polynomial(combined_binary, nwindows=10, margin=50, minpix=30)
     
-    drawing_image = auto_track.drawing_in_originimage(undistorted_image, combined_binary, left_fitx, right_fitx, ploty,src,dst)
+    bias = auto_track.bias_caculate(combined_binary, left_fitx, right_fitx, ploty, [0.3, 0.3, 0.3, 0.1])
+    # drawing_image = auto_track.drawing_in_originimage(undistorted_image, combined_binary, left_fitx, right_fitx, ploty,src,dst)
     
-    drawing_image= np.hstack((drawing_image,out_binary))
+    # drawing_image= np.hstack((drawing_image,out_binary))
     
-    cv2.imshow("out_binary", drawing_image)
+    cv2.imshow("out_binary", out_binary)
     
      # 等待按键并关闭窗口
     cv2.waitKey(0)
