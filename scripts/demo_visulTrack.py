@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #用户库
-from visulTracking import laneDetection
+from laneDetection import laneDetection
 
 if __name__ == '__main__':
     
@@ -29,6 +29,8 @@ if __name__ == '__main__':
     combined_binary[(hlsL_binary == 1) | (gray_binary == 1)] = 1
     
     out_binary,left_fitx,right_fitx,ploty= auto_track.fit_polynomial(combined_binary, nwindows=10, margin=50, minpix=30)
+    
+    bias = auto_track.bias_caculate(combined_binary, left_fitx, right_fitx, ploty, [0.3, 0.3, 0.3, 0.1])
     
     drawing_image = auto_track.drawing_in_originimage(undistorted_image, combined_binary, left_fitx, right_fitx, ploty,src,dst)
     
