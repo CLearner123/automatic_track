@@ -1,6 +1,8 @@
+#使用ros-noetic-usb-cam
+
 image_width: 1280
 image_height: 720
-camera_name: narrow_stereo
+camera_name: Intel D455
 camera_matrix:
   rows: 3
   cols: 3
